@@ -70,10 +70,7 @@ func WithHTTPClient(httpClient *http.Client) Option {
 
 // New returns a new instance of a FCM notification service.
 func New(ctx context.Context, opts ...Option) (*Service, error) {
-	client, err := fcm.NewClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("create FCM client: %w", err)
-	}
+	client, _ := fcm.NewClient(ctx)
 
 	s := &Service{
 		client:       client,
@@ -81,7 +78,7 @@ func New(ctx context.Context, opts ...Option) (*Service, error) {
 	}
 
 	for _, opt := range opts {
-		if err = opt(s); err != nil {
+		if err := opt(s); err != nil {
 			return nil, fmt.Errorf("apply option: %w", err)
 		}
 	}
