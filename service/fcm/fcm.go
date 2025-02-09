@@ -15,6 +15,8 @@ import (
 // Compile-time check that Service satisfies the Notifier interface.
 var _ notify.Notifier = (*Service)(nil)
 
+const DataKey = "FCM_DATA"
+
 // Used to generate mocks for the FCM client.
 type fcmClient interface {
 	Send(ctx context.Context, message ...*messaging.Message) (*messaging.BatchResponse, error)
@@ -98,6 +100,13 @@ func (s *Service) Send(ctx context.Context, subject, message string) error {
 		return errors.New("no device tokens set")
 	}
 
+	data := make(map[string]string)
+	if ctx != nil {
+		if contextData, ok := ctx.Value(DataKey).(map[string]string); ok {
+			data = contextData // Use the extracted map if it exists
+		}
+	}
+
 	if len(s.deviceTokens) == 1 {
 		msg := &messaging.Message{
 			Token: s.deviceTokens[0],
@@ -105,6 +114,7 @@ func (s *Service) Send(ctx context.Context, subject, message string) error {
 				Title: subject,
 				Body:  message,
 			},
+			Data: data,
 		}
 
 		_, err := s.client.Send(ctx, msg)
@@ -118,6 +128,7 @@ func (s *Service) Send(ctx context.Context, subject, message string) error {
 				Title: subject,
 				Body:  message,
 			},
+			Data: data,
 		}
 
 		_, err := s.client.SendMulticast(ctx, msg)
